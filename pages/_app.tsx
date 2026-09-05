@@ -13,10 +13,22 @@ declare global {
   }
 }
 
-function OpenAIAdsPixel({ pixelId }: { pixelId: string }) {
+function OpenAIAdsRouteTracker() {
   useEffect(() => {
     const trackPageView = () => {
-      window.oaiq?.('measure', 'page_viewed');
+      try {
+        window.oaiq?.('measure', 'page_viewed', {
+          type: 'contents',
+          contents: [
+            {
+              id: window.location.pathname,
+              content_type: 'page',
+            },
+          ],
+        });
+      } catch {
+        // Conversion measurement must never interrupt navigation.
+      }
     };
 
     Router.events.on('routeChangeComplete', trackPageView);
@@ -26,15 +38,7 @@ function OpenAIAdsPixel({ pixelId }: { pixelId: string }) {
     };
   }, []);
 
-  return (
-    <Script id="openai-ads-pixel" strategy="afterInteractive">
-      {`
-!function(w,d,s,u,o,f,js,fjs){w[o]=w[o]||function(){(w[o].q=w[o].q||[]).push(arguments)},w[o].l=1*new Date();f=d.createElement(s),js=d.getElementsByTagName(s)[0],f.async=1,f.src=u,js.parentNode.insertBefore(f,js)}(window,document,"script","https://cdn.openai.com/oaiq.js","oaiq");
-oaiq("init", ${JSON.stringify(pixelId)});
-oaiq("measure", "page_viewed");
-      `}
-    </Script>
-  );
+  return null;
 }
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -51,7 +55,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 `}
       </Script>
 
-      {openAIAdsPixelId && <OpenAIAdsPixel pixelId={openAIAdsPixelId} />}
+      {openAIAdsPixelId && <OpenAIAdsRouteTracker />}
       <AnnouncementBar />
       <Component {...pageProps} />
       <Analytics />
